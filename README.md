@@ -195,7 +195,7 @@ $END
 </ul>
 </p>
 
-```C#
+```csharp
 class Schema
 {
     private IEnumerable<string> chainName = new List<string>();
@@ -244,7 +244,7 @@ class Schema
 Далее необходимо запарсить NET-файл.
 </p>
 
-```C#
+```csharp
 //читаем NET файл
 public List<string> readNetFile()
 {
