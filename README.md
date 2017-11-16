@@ -135,6 +135,51 @@ N39046   R1('5) X1('10);
 </ul>
 </p>
 
+<p>
+Есть еще один вариант NET-файла:
+</p>
+
+```
+$PACKAGES
+K10-17! 0.1 mk; C1
+K10-17! 200mk; C2
+K561LE5! K561LE5; DD1
+MLT! 100k; R1
+MLT! 10k; R2
+MLT! 100k; R3
+MLT! 1M; R4
+MLT! 51k; R5
+D814B! D814B; VD1
+KD522B! KD522B; VD2
+KD522B! KD522B; VD3
+KD522B! KD522B; VD4
+KD522B! KD522B; VD5
+IRF840! IRF840; VT1
+SNP! SNP; X1
+$NETS
+7;  DD1.7 X1.1 VD5.1 C1.1,
+     VD1.1 C2.1 VT1.2
+14;  DD1.14 C2.2 VD3.2 VD4.2,
+     X1.2
+N00745;  R1.1 R2.2
+N00845;  R2.1 C1.2 VD2.1 R3.1
+N01136;  DD1.5 DD1.6 R4.1 R3.2
+N01222;  R4.2 DD1.3
+N01254;  DD1.4 DD1.12 DD1.13 DD1.2,
+     DD1.1 DD1.9 DD1.8
+N01026;  VD1.2 VD3.1 R5.1 R1.2,
+     VD2.2
+N00990;  VT1.1 VD5.2 DD1.11 VD4.1,
+     DD1.10
+N01748;  X1.3 VT1.3
+N01774;  R5.2 X1.4
+$END
+```
+
+<p>
+Здесь нам необходимо всё от $NETS до $END. Остальное нас не интересует. И программа должна уметь парсить два варианта NET-файла.
+</p>
+
 <h2 id="sharp">Код C#</h2>
 
 <p align="justify">
@@ -195,3 +240,96 @@ class Schema
 }
 ```
 
+<p>
+Далее необходимо запарсить NET-файл.
+</p>
+
+```C#
+//читаем NET файл
+public List<string> readNetFile()
+{
+    OpenFileDialog dlg = new OpenFileDialog();
+    dlg.FileName = "Document";
+    dlg.DefaultExt = ".net";
+    dlg.Filter = "NET file (.net)|*.net";
+
+    // открыть диалоговое окно выбора файла
+    Nullable<bool> result = dlg.ShowDialog();
+
+    //здесь будет результат
+    List<string> split = new List<string>();
+
+    // Если файл прочитан
+    if (result == true)
+    {
+        // открыть файл
+        string filename = dlg.FileName;
+
+        //чтение NET файла 
+        string textNetFile = "";
+
+        try
+        {
+            using (StreamReader sr = new StreamReader(filename))
+            {
+                textNetFile = sr.ReadToEnd();
+            }
+        }
+        catch (Exception exp)
+        {
+            MessageBox.Show(exp.Message);
+        }
+
+        //выводим название выбранного файла на экран
+        string[] sp = filename.Split('\\');
+        labelNetFileName.Content = sp[sp.Length - 1];
+
+        /*
+         * Есть два вида NET файла.
+         * В одном из них есть мета-теги $NETS, $END и т.п. 
+         * Это означает, что в NET файле есть много других символов, которые не нужны.
+         * От них нужно избавиться.
+         * То есть находим $NETS, и если есть, то удаляем лишнее
+         */
+
+        //если NET файл содержит $NETS
+        if (textNetFile.Contains("$NETS"))
+        {
+            int indexNets = 0;
+
+            //находим $NETS и запоминаем его позицию
+            foreach (Match m in Regex.Matches(textNetFile, @"[$]NETS"))
+            {
+                indexNets = m.Index;
+            }
+
+            //удаляем подстроку до $NETS (сам $NETS имеет 5 символов + удаление перевода строки)
+            textNetFile = textNetFile.Remove(0, indexNets + 7);
+
+            //и удаляем в конце $END
+            textNetFile = textNetFile.Replace("\n$END", "");
+
+            //удаляем все ;
+            textNetFile = textNetFile.Replace(";", "");
+
+            //удаляем перенос строки в одной цепи
+            textNetFile = Regex.Replace(textNetFile, @",\r?\n", "");
+
+            //разделяем по переносу строки
+            split = textNetFile.Split('\n').ToList();
+        }
+        else
+        {
+            //удаляем перенос строки в самом конце (
+            textNetFile = textNetFile.Substring(0, textNetFile.Length - 4);
+            //разделяем по ;
+            split = textNetFile.Split(';').ToList();
+        }
+    }
+    return split;
+}
+```
+
+<p>
+В классе Schema храним названия цепей, элементов и номера пинов. И формируем матрицу цепей.
+</p>
