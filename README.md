@@ -343,7 +343,7 @@ public List<string> readNetFile()
 Таким образом можно извлечь необходимые данные для построения матрицы цепей.
 </p>
 
-```
+```csharp
 //создаем объект
 Schema sh = new Schema();
 
@@ -378,7 +378,7 @@ for (int i = 0, count; i < split.Count; i++)
 Теперь необходимо сформировать размерность матрицы, для того, что вывести ее в dataGrid (не путать с datdGridView). В sh.ElemName и sh.ElemPin как раз и хранятся названия элементов и пинов. Но загвоздка заключается в том, что в sh.ElemName и sh.ElemPin имеются повторяющиеся названия элементов и номера пинов. Так избавимся от них. И отсоритруем.
 </p>
 
-```
+```csharp
 //удаляем повторяющиеся названия элементов
 sh.ElemName = sh.ElemName.Distinct();
 //сортируем
@@ -394,7 +394,7 @@ sh.ElemPin = sh.ElemPin.OrderBy(s => s);
 И формируем dataGrid:
 </p>
 
-```
+```csharp
 //заполняем DataGrid матрицей цепей
 public void setDataGridMatrixChain(IEnumerable<string> elemName, IEnumerable<int> elemPin, string[][] stepArray)
 {
