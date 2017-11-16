@@ -403,12 +403,6 @@ public void setDataGridMatrixChain(IEnumerable<string> elemName, IEnumerable<int
     //формируем размерность DataGrid
     dt.Columns.Add("#");
 
-    //для файла allegro_5.NET раскоментировать эти строки
-    /*
-     * dt.Columns.Add("");
-     * dt.Columns.Add("");
-     */
-
     foreach (var itemPin in elemPin)
     {
         dt.Columns.Add(itemPin.ToString());
@@ -451,3 +445,21 @@ public void setDataGridMatrixChain(IEnumerable<string> elemName, IEnumerable<int
     dataGrid.ItemsSource = dt.DefaultView;
 }
 ```
+
+<p>
+Теперь возможно реализовать сам алгоритм компоновки.
+</p>
+
+
+<h2 id="max">Код MaxScript</h2>
+<p>
+Визуализация будет осуществляться в программной среде 3DS Max 2017.
+</p>
+
+<p>
+На выходе C# выдает скрипт, который необходимо запустить в 3DS Max.
+</p>
+
+<p>
+
+</p>
