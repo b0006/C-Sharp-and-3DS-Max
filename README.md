@@ -330,6 +330,124 @@ public List<string> readNetFile()
 }
 ```
 
-<p>
-В классе Schema храним названия цепей, элементов и номера пинов. И формируем матрицу цепей.
+<p align="justify">
+В классе Schema храним названия цепей, элементов и номера пинов. С помощью  регулярных выражений вытаскиваем каждое найденное вхождение. Каждый NET-файл имеет однообразную тенденцию: в каждой строке
+<ul>
+  <li>первое вхождение - название цепи;</li>
+  <li>нечетное вхождение - название элемента;</li>
+  <li>четное вхождение - номер пина элемента.</li>
+</ul>
 </p>
+
+<p>
+Таким образом можно извлечь необходимые данные для построения матрицы цепей.
+</p>
+
+```
+//создаем объект
+Schema sh = new Schema();
+
+for (int i = 0, count; i < split.Count; i++)
+{
+    count = 0;
+    //обрабатываем каждое найденное вхождение с помощью регулярного выражения 
+    //"\w+" -любой символ кроме специфических (-,)+ и т.п.)
+    foreach (Match m in Regex.Matches(split[i], @"\w+"))
+    {
+        //если первый элемент в подмассиве, то это название цепи
+        if (count == 0)
+        {
+            sh.СhainName = sh.setChainName(m.Value);
+        }
+        //если нечетный элемент в подмассиве, то это название элемента
+        else if (count % 2 != 0)
+        {
+            sh.ElemName = sh.setElemName(m.Value);
+        }
+        //если четный элемент в подмассиве, то это номер пина
+        else if (count % 2 == 0)
+        {
+            sh.ElemPin = sh.setElemPin(m.Value);
+        }
+        count++;
+    }
+}
+```
+
+<p align="justify">
+Теперь необходимо сформировать размерность матрицы, для того, что вывести ее в dataGrid (не путать с datdGridView). В sh.ElemName и sh.ElemPin как раз и хранятся названия элементов и пинов. Но загвоздка заключается в том, что в sh.ElemName и sh.ElemPin имеются повторяющиеся названия элементов и номера пинов. Так избавимся от них. И отсоритруем.
+</p>
+
+```
+//удаляем повторяющиеся названия элементов
+sh.ElemName = sh.ElemName.Distinct();
+//сортируем
+sh.ElemName = sh.ElemName.OrderBy(s => s);
+
+//удаляем повторяющиеся номера пинов
+sh.ElemPin = sh.ElemPin.Distinct();
+//сортируем
+sh.ElemPin = sh.ElemPin.OrderBy(s => s);
+```
+
+<p>
+И формируем dataGrid:
+</p>
+
+```
+//заполняем DataGrid матрицей цепей
+public void setDataGridMatrixChain(IEnumerable<string> elemName, IEnumerable<int> elemPin, string[][] stepArray)
+{
+    DataTable dt = new DataTable();
+
+    //формируем размерность DataGrid
+    dt.Columns.Add("#");
+
+    //для файла allegro_5.NET раскоментировать эти строки
+    /*
+     * dt.Columns.Add("");
+     * dt.Columns.Add("");
+     */
+
+    foreach (var itemPin in elemPin)
+    {
+        dt.Columns.Add(itemPin.ToString());
+    } 
+
+    foreach (var itemElem in elemName)
+    {
+        dt.Rows.Add(itemElem);
+    }
+
+    //заполняем DataGrid
+    string tempChain = "";
+    int tempCount = 0;
+
+    foreach (var itemElem in elemName)
+    {
+        for (int i = 0, count = 0; i < stepArray.Length; i++)
+        {
+            count = 0;
+            tempChain = stepArray[i][0].ToString();
+
+            for (int k = 0; k < stepArray[i].Length; k++)
+            {
+                if (count != 0)
+                {
+                    if (count % 2 != 0)
+                    {
+                        if (itemElem.ToString() == stepArray[i][k])
+                        {
+                            //вместо названий цепей вставляем их "номер"
+                            dt.Rows[tempCount][Convert.ToInt32(stepArray[i][k + 1])] = (i + 1);
+                        }
+                    }
+                }
+                count++;
+            }
+        }
+        tempCount++;
+    }
+    dataGrid.ItemsSource = dt.DefaultView;
+}
+```
